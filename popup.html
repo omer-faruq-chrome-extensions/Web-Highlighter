@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Highlighter</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Web Highlighter</h1>
+    
+    <div class="section">
+      <h2>Select Color</h2>
+      <div class="color-grid">
+        <button class="color-btn yellow" data-color="yellow" title="Yellow (Ctrl+Shift+H)">
+          <span class="color-circle yellow-bg"></span>
+          <span class="color-name">Yellow</span>
+        </button>
+        <button class="color-btn green" data-color="green" title="Green (Ctrl+Shift+G)">
+          <span class="color-circle green-bg"></span>
+          <span class="color-name">Green</span>
+        </button>
+        <button class="color-btn blue" data-color="blue" title="Blue (Ctrl+Shift+B)">
+          <span class="color-circle blue-bg"></span>
+          <span class="color-name">Blue</span>
+        </button>
+        <button class="color-btn pink" data-color="pink" title="Pink (Ctrl+Shift+P)">
+          <span class="color-circle pink-bg"></span>
+          <span class="color-name">Pink</span>
+        </button>
+        <button class="color-btn orange" data-color="orange" title="Orange">
+          <span class="color-circle orange-bg"></span>
+          <span class="color-name">Orange</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>How to Use</h2>
+      <ul class="instructions">
+        <li>Select text and right-click</li>
+        <li>Choose a color or use keyboard shortcut</li>
+        <li>Ctrl+Click to remove highlight</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Auto Sync</h2>
+      <div id="syncStatus" class="sync-status active">
+        <p class="sync-status-text">✓ Automatically syncing via your Chrome account</p>
+      </div>
+      <p class="sync-info">Sign in to the same account in Chrome and Edge to automatically sync your highlights</p>
+    </div>
+
+    <div class="section">
+      <h2>Manual Backup</h2>
+      <div class="sync-buttons">
+        <button id="exportBtn" class="action-btn export">
+          <span>📥</span> Export
+        </button>
+        <button id="importBtn" class="action-btn import">
+          <span>📤</span> Import
+        </button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display: none;">
+      <p class="sync-info">Manually backup your highlights</p>
+    </div>
+
+    <div class="section stats">
+      <div class="stat-item">
+        <span class="stat-label">This page:</span>
+        <span id="pageHighlights" class="stat-value">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Total:</span>
+        <span id="totalHighlights" class="stat-value clickable" title="Click to view all highlights">0</span>
+      </div>
+    </div>
+  </div>
+  <script src="sync.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+.web-highlight {
+  cursor: pointer !important;
+  transition: opacity 0.2s ease !important;
+  border-radius: 2px !important;
+  padding: 2px 0 !important;
+  position: relative !important;
+  z-index: 999999 !important;
+  display: inline !important;
+}
+
+.web-highlight:hover {
+  opacity: 0.8 !important;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.web-highlight-yellow {
+  background-color: #ffeb3b !important;
+  color: #000 !important;
+}
+
+.web-highlight-green {
+  background-color: #8bc34a !important;
+  color: #000 !important;
+}
+
+.web-highlight-blue {
+  background-color: #64b5f6 !important;
+  color: #000 !important;
+}
+
+.web-highlight-pink {
+  background-color: #f48fb1 !important;
+  color: #000 !important;
+}
+
+.web-highlight-orange {
+  background-color: #ffab91 !important;
+  color: #000 !important;
+}

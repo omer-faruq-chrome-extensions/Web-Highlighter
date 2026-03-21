@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Icon Generator</title>
+</head>
+<body>
+  <canvas id="canvas16" width="16" height="16"></canvas>
+  <canvas id="canvas48" width="48" height="48"></canvas>
+  <canvas id="canvas128" width="128" height="128"></canvas>
+  
+  <script>
+    function createIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#667eea');
+      gradient.addColorStop(1, '#764ba2');
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+      
+      ctx.fillStyle = '#ffeb3b';
+      const markerWidth = size * 0.6;
+      const markerHeight = size * 0.5;
+      const x = (size - markerWidth) / 2;
+      const y = (size - markerHeight) / 2;
+      
+      ctx.beginPath();
+      ctx.moveTo(x, y + markerHeight * 0.3);
+      ctx.lineTo(x + markerWidth, y + markerHeight * 0.3);
+      ctx.lineTo(x + markerWidth, y + markerHeight);
+      ctx.lineTo(x, y + markerHeight);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fillRect(x, y, markerWidth, markerHeight * 0.25);
+    }
+    
+    createIcon(document.getElementById('canvas16'), 16);
+    createIcon(document.getElementById('canvas48'), 48);
+    createIcon(document.getElementById('canvas128'), 128);
+    
+    console.log('Icons created! Right-click each canvas and save as:');
+    console.log('- icon16.png');
+    console.log('- icon48.png');
+    console.log('- icon128.png');
+  </script>
+</body>
+</html>
