@@ -141,7 +141,26 @@ class WebHighlighter {
 
   getTextNodes(root) {
     const textNodes = [];
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) => {
+        // Skip text nodes inside script, style, noscript tags
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        
+        const tagName = parent.tagName.toLowerCase();
+        if (tagName === 'script' || tagName === 'style' || tagName === 'noscript') {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        // Skip empty or whitespace-only nodes
+        if (!node.textContent.trim()) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }, false);
+    
     let node;
     while ((node = walker.nextNode())) {
       textNodes.push(node);
@@ -176,7 +195,7 @@ class WebHighlighter {
 
   // --- Highlight creation ---
 
-  highlightSelection(color) {
+  async highlightSelection(color) {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
 
@@ -192,9 +211,9 @@ class WebHighlighter {
       console.log('[Highlighter] URL updated before save:', this.currentUrl, '->', currentPageUrl);
       this.currentUrl = currentPageUrl;
       this.storageKey = `highlights_${this.currentUrl}`;
-      // Reload highlights for current URL
+      // Reload highlights for current URL and wait for completion
       this.highlights = [];
-      this.loadHighlights();
+      await this.loadHighlightsSync();
     }
 
     const startAbsolute = this.getAbsoluteOffset(range.startContainer, range.startOffset);
@@ -388,6 +407,31 @@ class WebHighlighter {
     }
   }
 
+  async loadHighlightsSync() {
+    // Load highlights without restoring them (for use when adding new highlights)
+    try {
+      const syncResult = await chrome.storage.sync.get([this.storageKey]);
+      
+      if (syncResult[this.storageKey] && syncResult[this.storageKey].length > 0) {
+        this.highlights = syncResult[this.storageKey];
+        console.log('[Highlighter] Loaded existing highlights:', this.highlights.length);
+        return;
+      }
+
+      const localResult = await chrome.storage.local.get([this.storageKey]);
+      
+      if (localResult[this.storageKey] && localResult[this.storageKey].length > 0) {
+        this.highlights = localResult[this.storageKey];
+        console.log('[Highlighter] Loaded existing highlights:', this.highlights.length);
+        return;
+      }
+      
+      console.log('[Highlighter] No existing highlights, starting fresh');
+    } catch (error) {
+      console.warn('[Highlighter] Load error:', error);
+    }
+  }
+
   setupStorageListener() {
     // Listen for storage changes from other devices/tabs
     chrome.storage.onChanged.addListener((changes, areaName) => {
@@ -401,6 +445,7 @@ class WebHighlighter {
 
   restoreHighlights() {
     this.isRestoring = true;
+    console.log('[Highlighter] Restoring', this.highlights.length, 'highlights');
 
     // First pass: find all ranges WITHOUT modifying DOM
     const rangesToApply = [];
@@ -408,13 +453,16 @@ class WebHighlighter {
     for (const highlightData of this.highlights) {
       try {
         if (document.querySelector(`[data-highlight-id="${highlightData.id}"]`)) {
+          console.log('[Highlighter] Already exists:', highlightData.id);
           continue;
         }
 
         let range = this.findRangeByOffset(highlightData);
+        console.log('[Highlighter] Offset search:', range ? 'FOUND' : 'NOT FOUND');
 
         if (!range) {
           range = this.findRangeByTextSearch(highlightData);
+          console.log('[Highlighter] Text search:', range ? 'FOUND' : 'NOT FOUND');
         }
 
         if (range) {
@@ -427,6 +475,8 @@ class WebHighlighter {
       }
     }
 
+    console.log('[Highlighter] Found', rangesToApply.length, 'ranges to apply');
+
     // Second pass: apply all highlights in reverse order (highest offset first)
     // This prevents offset invalidation
     rangesToApply.sort((a, b) => b.highlightData.startOffset - a.highlightData.startOffset);
@@ -434,11 +484,13 @@ class WebHighlighter {
     for (const { range, highlightData } of rangesToApply) {
       try {
         this.applyHighlightFromRange(range, highlightData);
+        console.log('[Highlighter] Applied:', highlightData.id);
       } catch (e) {
         console.warn('[Highlighter] Apply error:', e);
       }
     }
 
+    console.log('[Highlighter] Restoration complete');
     this.isRestoring = false;
   }
 
