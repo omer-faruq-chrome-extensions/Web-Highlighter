@@ -294,12 +294,21 @@ class WebHighlighter {
 
   // --- Persistence ---
 
-  saveHighlights() {
+  async saveHighlights() {
     const data = {};
     data[this.storageKey] = this.highlights;
-    chrome.storage.sync.set(data).catch(() => {
-      chrome.storage.local.set(data);
-    });
+    
+    try {
+      // Save to sync storage
+      await chrome.storage.sync.set(data);
+      console.log('[Highlighter] Saved to sync storage:', this.highlights.length, 'highlights');
+      
+      // Also save to local as backup
+      await chrome.storage.local.set(data);
+    } catch (error) {
+      console.warn('[Highlighter] Sync save failed, using local only:', error);
+      await chrome.storage.local.set(data);
+    }
   }
 
   async loadHighlights() {
@@ -309,6 +318,7 @@ class WebHighlighter {
       
       if (syncResult[this.storageKey] && syncResult[this.storageKey].length > 0) {
         this.highlights = syncResult[this.storageKey];
+        console.log('[Highlighter] Loaded from SYNC storage:', this.highlights.length, 'highlights');
         this.restoreHighlights();
         return;
       }
@@ -318,9 +328,12 @@ class WebHighlighter {
       
       if (localResult[this.storageKey] && localResult[this.storageKey].length > 0) {
         this.highlights = localResult[this.storageKey];
+        console.log('[Highlighter] Loaded from LOCAL storage:', this.highlights.length, 'highlights');
         this.restoreHighlights();
         return;
       }
+      
+      console.log('[Highlighter] No highlights found in any storage');
     } catch (error) {
       console.warn('[Highlighter] Load error:', error);
     }
