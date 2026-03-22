@@ -21,6 +21,8 @@ class WebHighlighter {
     this.setupMessageListener();
     this.setupClickListener();
     this.setupMutationObserver();
+    this.setupUrlChangeDetection();
+    this.setupStorageListener();
 
     if (document.readyState === 'complete') {
       // Add small delay to ensure dynamic content is rendered
@@ -31,6 +33,42 @@ class WebHighlighter {
         setTimeout(() => this.loadHighlights(), 1000);
       });
     }
+  }
+
+  setupUrlChangeDetection() {
+    // Check for URL changes (for SPAs like Reddit)
+    let lastUrl = window.location.href;
+    let lastNormalizedUrl = this.normalizeUrl(lastUrl);
+    
+    const checkUrlChange = () => {
+      const currentUrl = window.location.href;
+      
+      // Quick check: if URL hasn't changed at all, skip normalization
+      if (currentUrl === lastUrl) return;
+      
+      const normalizedUrl = this.normalizeUrl(currentUrl);
+      
+      // Only reload if normalized URL actually changed
+      if (normalizedUrl !== lastNormalizedUrl) {
+        console.log('[Highlighter] URL changed from', lastNormalizedUrl, 'to', normalizedUrl);
+        lastUrl = currentUrl;
+        lastNormalizedUrl = normalizedUrl;
+        this.currentUrl = normalizedUrl;
+        this.storageKey = `highlights_${this.currentUrl}`;
+        this.highlights = [];
+        
+        // Load highlights for new URL
+        setTimeout(() => this.loadHighlights(), 500);
+      } else {
+        lastUrl = currentUrl;
+      }
+    };
+    
+    // Check URL on popstate (back/forward navigation) - instant
+    window.addEventListener('popstate', checkUrlChange);
+    
+    // Check URL periodically for SPA navigation - less frequent
+    setInterval(checkUrlChange, 2000);
   }
 
   setupMutationObserver() {
@@ -337,6 +375,17 @@ class WebHighlighter {
     } catch (error) {
       console.warn('[Highlighter] Load error:', error);
     }
+  }
+
+  setupStorageListener() {
+    // Listen for storage changes from other devices/tabs
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (changes[this.storageKey] && areaName === 'sync') {
+        console.log('[Highlighter] Sync update detected from another device');
+        this.highlights = changes[this.storageKey].newValue || [];
+        this.restoreHighlights();
+      }
+    });
   }
 
   restoreHighlights() {
