@@ -186,6 +186,17 @@ class WebHighlighter {
     const selectedText = selection.toString();
     if (!selectedText.trim()) return;
 
+    // Update URL before saving to ensure we use current page URL
+    const currentPageUrl = this.normalizeUrl(window.location.href);
+    if (currentPageUrl !== this.currentUrl) {
+      console.log('[Highlighter] URL updated before save:', this.currentUrl, '->', currentPageUrl);
+      this.currentUrl = currentPageUrl;
+      this.storageKey = `highlights_${this.currentUrl}`;
+      // Reload highlights for current URL
+      this.highlights = [];
+      this.loadHighlights();
+    }
+
     const startAbsolute = this.getAbsoluteOffset(range.startContainer, range.startOffset);
     const endAbsolute = this.getAbsoluteOffset(range.endContainer, range.endOffset);
 
